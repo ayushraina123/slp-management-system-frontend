@@ -1,220 +1,148 @@
-# SLP Management System Frontend
+﻿# SLP Management System Frontend
 
 [![React](https://img.shields.io/badge/React-18.3.1-blue)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.4.2-purple)](https://vitejs.dev/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://www.docker.com/)
 
-A modern **React frontend** built with **TypeScript** and **Vite** for the **SLP Management System**.  
-It provides a clean admin interface to manage devotees, donations, expenses, dashboard analytics, exports, and batch operations while integrating with the backend microservices ecosystem.
+The SLP Management System Frontend is a React, TypeScript, and Vite admin UI for managing devotees, donations, expenses, dashboard analytics, exports, and batch operations.
+
+This repository contains the client application only. Backend APIs are served through the API Gateway.
 
 ---
 
-# Table of Contents
+## Table of Contents
 
-- [Project Overview](#project-overview)
 - [Frontend Scope](#frontend-scope)
+- [System Context](#system-context)
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Application Modules](#application-modules)
-- [Authentication & Authorization](#authentication--authorization)
-- [Pagination](#pagination)
+- [Authentication](#authentication)
 - [API Integration](#api-integration)
 - [Project Structure](#project-structure)
-- [Setup & Installation](#setup--installation)
-- [Build for Production](#build-for-production)
+- [Local Development](#local-development)
+- [Production Build](#production-build)
+- [Docker](#docker)
 - [Future Scope](#future-scope)
 
 ---
 
-# Project Overview
-
-The **SLP Management System Frontend** is the user interface layer of the system and works together with:
-
-- **Devotee Management System Backend**
-- **API Gateway**
-- **Eureka Server**
-
-This frontend allows authorized users to:
-
-- View dashboard summaries
-- Add and manage devotees
-- Track donations
-- Track expenses
-- Trigger export jobs
-- Trigger delete batch jobs
-
-It is designed to work with secure backend APIs protected using JWT-based authentication.
-
----
-
-# Frontend Scope
-
-This repository contains the **client-side application only**.
+## Frontend Scope
 
 The frontend is responsible for:
 
-- Rendering the UI
-- Calling backend APIs
-- Managing login state
-- Enforcing frontend-level access messaging for viewer users
-- Displaying paginated records for large datasets
+- Rendering the admin UI
+- Calling backend APIs through the gateway
+- Managing login state and access tokens
+- Displaying dashboard, devotee, donation, expense, export, and batch-job screens
+- Showing viewer/admin access messaging in the UI
+- Handling client-side routing with React Router
 
-Backend business logic, persistence, filtering, and batch execution are handled by the backend services.
+Backend business logic, persistence, filtering, authentication enforcement, and batch execution are handled by backend services.
 
 ---
 
-# Features
+## System Context
+
+```text
+Browser
+  |
+  v
+Frontend container / Vite dev server
+  |
+  v
+API Gateway
+  |
+  v
+Devotee Service
+  |
+  v
+PostgreSQL
+```
+
+In Docker, the frontend runs behind Nginx and proxies backend routes to the API Gateway container.
+
+---
+
+## Features
 
 ### Core Features
 
-- **Login and Signup**
-    - User authentication flow
-    - Token-based session handling
-
-- **Dashboard**
-    - Summary cards for key metrics
-    - Recent donations and expenses
-    - Category breakdown charts
-    - Monthly trend visualization
-
-- **Devotee Management**
-    - Add devotee records
-    - View paginated devotee data
-    - Delete devotee records
-
-- **Donation Management**
-    - View paginated donation records
-    - Delete donation records
-
-- **Expense Management**
-    - Add expense records
-    - Edit expense records
-    - View paginated expense data
-    - Delete expense records
-
----
-
-### Operational Features
-
-- **Export Trigger**
-    - Trigger backend export job by donation type
-
-- **Delete Batch Trigger**
-    - Trigger backend delete-data batch job
-
-- **Role-Based UI Restrictions**
-    - Admin users can access protected actions
-    - Viewer users receive access warning messages for restricted actions
-
----
+- Login and signup
+- Dashboard summaries and charts
+- Devotee creation, listing, pagination, and deletion
+- Donation listing, pagination, and deletion
+- Expense creation, editing, listing, pagination, and deletion
+- Export job trigger by donation type
+- Delete-data batch job trigger
+- Admin/viewer UI access messaging
 
 ### UX Features
 
-- **Responsive Layout**
-    - Works across desktop and mobile layouts
-
-- **Paginated Tables**
-    - Devotees, donations, and expenses are loaded page by page
-
-- **Error Handling**
-    - Clear API error messages shown in the UI
-
-- **Charts & Visual Insights**
-    - Donation and expense category charts
-    - Monthly trend chart on dashboard
+- Responsive layout
+- Paginated tables for large datasets
+- API error handling in the UI
+- Donation and expense charts
+- Monthly trend visualization
 
 ---
 
-# Technology Stack
+## Technology Stack
 
-### Frontend
-- React 18
-- TypeScript
-- Vite
-
-### Styling
-- Tailwind CSS
-- Custom UI components
-- Lucide React icons
-
-### Routing
-- React Router
-
-### Data Visualization
-- Recharts
-
-### Build Tool
-- Vite
+| Area | Technology |
+|------|------------|
+| UI | React 18, TypeScript |
+| Build Tool | Vite 6 |
+| Routing | React Router 7 |
+| Styling | Tailwind CSS, custom UI components |
+| Icons | Lucide React, MUI Icons |
+| Charts | Recharts |
+| State | Zustand |
+| Production Server | Nginx |
+| Containerization | Docker |
 
 ---
 
-# Application Modules
+## Application Modules
 
 | Module | Description |
 |--------|-------------|
 | Login | Authenticates users and stores access token |
 | Signup | Registers new users |
 | Dashboard | Displays summary metrics, trends, and recent activity |
-| Devotees | Create, list, and delete devotees |
-| Donations | View and delete donation records |
-| Expenses | Create, edit, list, and delete expenses |
+| Devotees | Creates, lists, and deletes devotee records |
+| Donations | Lists and deletes donation records |
+| Expenses | Creates, edits, lists, and deletes expense records |
 | Export Data | Triggers backend export batch job |
-| Delete Data Job | Triggers backend delete batch job |
+| Delete Data Job | Triggers backend delete-data batch job |
 
 ---
 
-# Authentication & Authorization
+## Authentication
 
-The frontend integrates with the backend authentication flow.
-
-### Authentication Flow
+The frontend integrates with the backend JWT flow.
 
 1. User logs in with username and password.
-2. Backend returns a JWT access token.
-3. Frontend stores the token in local storage.
-4. Protected API requests include the token in the `Authorization` header.
+2. The backend returns an access token in the `Authorization` response header.
+3. The frontend stores the access token and sends it on protected API requests.
+4. The backend sets a refresh token in an HTTP-only cookie.
+5. The frontend can call `/refresh-token` to receive a new access token when the refresh cookie is valid.
+6. Logout clears the refresh token cookie.
 
-### Authorization
+Users named `Ayush` and `Rajesh` are treated as admin users by the frontend UI. Other users are treated as viewers in the UI flow.
 
-- Users with usernames **Ayush** and **Rajesh** are treated as admin users
-- Other users are treated as viewer users in the UI flow
-- Restricted actions show:
-
-```text
-You do not have access to this functionality.
-```
+Backend authorization is still enforced by the Devotee Service.
 
 ---
 
-# Pagination
+## API Integration
 
-The frontend implements **end-to-end pagination** for large datasets.
-
-### Current Pagination Behavior
-
-- Devotees page loads records in pages of **20**
-- Donations page loads records in pages of **20**
-- Expenses page loads records in pages of **20**
-
-When a user changes the page from the UI:
-
-1. The frontend sends the selected page number and page size to the backend
-2. The backend returns only that page of records
-3. The UI updates the table and pagination controls
-
-This keeps list pages more scalable and reduces payload size.
-
----
-
-# API Integration
-
-The frontend communicates with backend APIs exposed through the **API Gateway**.
-
-### Main API Areas Used
+The frontend communicates with backend APIs exposed through the API Gateway.
 
 | Area | Endpoint Prefix |
 |------|-----------------|
-| Authentication | `/login`, `/api/user`, `/api/logout` |
+| Authentication | `/login`, `/refresh-token`, `/api/user`, `/api/logout` |
 | Dashboard | `/api/dashboard` |
 | Devotees | `/api/devotees` |
 | Donations | `/api/donation` |
@@ -222,18 +150,30 @@ The frontend communicates with backend APIs exposed through the **API Gateway**.
 | Export Job | `/api/job/export-data` |
 | Delete Batch Job | `/api/job/delete-data` |
 
+### Docker/Nginx Proxying
+
+The production container uses Nginx. The Nginx config proxies backend routes to the API Gateway service name:
+
+```text
+/api/          -> http://api-gateway:8080
+/login         -> http://api-gateway:8080
+/logout        -> http://api-gateway:8080
+/refresh-token -> http://api-gateway:8080
+```
+
+All other routes fall back to `index.html` for client-side routing.
+
 ---
 
-# Project Structure
+## Project Structure
 
 ```text
 src/
   app/
     components/     # Shared layout and UI components
-    hooks/          # Reusable frontend hooks
     lib/            # API, auth, formatting, and utility logic
     pages/          # Route-level screens
-    routes.tsx      # Router configuration
+    store/          # Shared client state
     types/          # Shared TypeScript DTOs and response types
   styles/           # Global styles, theme, and fonts
   main.tsx          # Application entry point
@@ -241,49 +181,76 @@ src/
 
 ---
 
-# Setup & Installation
+## Local Development
 
-### Clone the repository
+### Prerequisites
 
-```bash
-git clone https://github.com/ayushraina123/slp-management-system-frontend.git
-cd slp-management-system-frontend
-```
+- Node.js 22 or compatible current LTS
+- npm
+- API Gateway running locally on port `8080`
+- Backend services registered and available through the gateway
 
----
-
-## Install dependencies
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
----
-
-## Run the development server
+### Run Dev Server
 
 ```bash
 npm run dev
 ```
 
-By default, Vite will start the app locally and the frontend will call backend routes configured through the current environment and gateway setup.
+Vite starts the app locally. Backend calls should be routed through the current frontend API configuration and the API Gateway.
 
 ---
 
-# Build for Production
+## Production Build
 
 ```bash
 npm run build
 ```
 
-This creates an optimized production build in the `dist/` folder.
+The optimized production build is written to:
+
+```text
+dist/
+```
 
 ---
 
-# Future Scope
+## Docker
+
+### Build Image
+
+```bash
+docker build -t slp-frontend:local .
+```
+
+### Run Container
+
+This example assumes an API Gateway container named `api-gateway` is reachable on the same Docker network.
+
+```bash
+docker run --rm \
+  --name slp-frontend \
+  -p 3000:80 \
+  slp-frontend:local
+```
+
+The container serves the frontend on:
+
+```text
+http://localhost:3000
+```
+
+For the complete stack, use the Docker Compose setup in the **SLP Management System Deployment** folder.
+
+---
+
+## Future Scope
 
 - Add filtering and search on paginated tables
 - Add global loading and toast feedback improvements
-- Add dedicated frontend environment configuration for deployment
-- Add screenshots and walkthrough documentation
-- Improve dashboard backend aggregation for larger datasets
+- Improve dashboard aggregation behavior for larger datasets
